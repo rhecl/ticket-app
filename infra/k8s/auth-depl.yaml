@@ -15,6 +15,12 @@ spec:
       containers:
         - name: auth
           image: us.gcr.io/tickets-dev-289110/auth
+          env:
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef: #kubectl create secret generic jwt-secret --from-literal=JWT_KEY=test
+                  name: jwt-secret
+                  key: JWT_KEY
 ---
 apiVersion: v1
 kind: Service

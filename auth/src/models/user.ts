@@ -33,6 +33,21 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   }
+}, {
+  // customize user object properties
+  // when turned into json
+  // for example we want to 
+  // - not include the password field
+  // - rename the _id field to id
+  // - not include the __v field
+  toJSON: {
+    transform(doc, ret) {
+      delete ret.password;
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
+  }
 });
 
 userSchema.pre('save', async function(done) {
