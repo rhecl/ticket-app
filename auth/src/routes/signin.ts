@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
+import jwt from 'jsonwebtoken';
 
+import { Password } from '../services/password';
 import { validateRequest } from '../middlewares/validate-request';
 import { User } from '../models/user';
 import { BadRequestError } from '../errors/bad-request-error';
@@ -23,6 +25,26 @@ router.post('/api/users/signin', [
   if (!existingUser) {
     throw new BadRequestError('Email does not exist');
   }
+
+  const passwordsMatch = await Password.compare(
+    existingUser.password,
+    password
+  );
+
+  if (!passwordsMatch) {
+    throw new BadRequestError('Invalid password');
+  }
+
+  const userJwt = jwt.sign({
+    id: existingUser.id,
+    email: existingUser.email
+  }, process.env.JWT_KEY!); // temp secret
+
+  req.session = {
+    jwt: userJwt
+  };
+
+  res.status(201).send(existingUser);
 });
 
 export { router as signinRouter };
