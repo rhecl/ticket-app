@@ -1,36 +1,23 @@
-import axios from 'axios';
+import buildClient from '../api/build-client';
 
 const LandingPage = ({ currentUser }) => {
-  console.log(currentUser);
-  return <h1>Landing Page</h1>;
+  return currentUser ? (
+    <h1>You are signed in</h1>
+  ) : (
+    <h1>You are not signed in</h1>
+  );
 };
 
 // Execute during server side rendering with nextjs
 // Whatever is returned is sent to the component as props
-LandingPage.getInitialProps = async ({ req }) => {
+LandingPage.getInitialProps = async (context) => {
   // request from getInitialProps can be executed on the server OR client
   // depending on how the page was loaded
   // refresh, URL reload => on the server
   // navigating inside the app => on the client
+  const client = buildClient(context);
 
-  // on the server
-  if (typeof window === 'undefined') {
-    // access ingress nginx from inside the cluster
-    // SERVICE-NAME.NAMESPACE.svc.cluster.local
-    const { data } = await axios.get(
-      'http://ingress-nginx-controller.ingress-nginx.svc.cluster.local/api/users/currentuser',
-      {
-        // headers: {
-        //  host: 'tickets.dev',
-        //},
-        headers: req.headers, // include all initial headers, including the jwt cookie
-      }
-    );
-
-    return data;
-  }
-
-  const { data } = await axios.get('/api/users/currentuser');
+  const { data } = await client.get('/api/users/currentuser');
 
   return data;
 };
