@@ -15,7 +15,15 @@ stan.on('connect', () => {
     process.exit();
   });
 
-  const options = stan.subscriptionOptions().setManualAckMode(true);
+  const options = stan
+    .subscriptionOptions()
+    .setManualAckMode(true)
+    // when a client subscribes, send all events in history
+    .setDeliverAllAvailable()
+    // keep track of which events the client has already processed
+    // this makes sure that in case of a disconnect
+    // the client does not process all events in history
+    .setDurableName('durable-test');
   // 2nd parameter - queue group
   // event is sent to just one member of that queue group
   // for example we have 5 instances of service X and we don't want all of them to receieve the same event
