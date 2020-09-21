@@ -1,5 +1,7 @@
-import nats, { Message } from 'node-nats-streaming';
+import nats from 'node-nats-streaming';
 import { randomBytes } from 'crypto';
+
+import { TicketCreatedListener } from './events/ticket-created-listener';
 
 console.clear();
 
@@ -15,38 +17,7 @@ stan.on('connect', () => {
     process.exit();
   });
 
-  const options = stan
-    .subscriptionOptions()
-    .setManualAckMode(true)
-    // when a client subscribes, send all events in history
-    .setDeliverAllAvailable()
-    // keep track of which events the client has already processed
-    // this makes sure that in case of a disconnect
-    // the client does not process all events in history
-    .setDurableName('durable-test');
-  // 2nd parameter - queue group
-  // event is sent to just one member of that queue group
-  // for example we have 5 instances of service X and we don't want all of them to receieve the same event
-  // we join all 5 to a queue group and only one of them will get the event
-  // all other clients without a queue group get the event normally
-  const subscription = stan.subscribe(
-    'ticket:created',
-    'listenerQueueGroup',
-    options
-  );
-
-  subscription.on('message', (msg: Message) => {
-    const data = msg.getData();
-
-    if (typeof data === 'string') {
-      console.log(
-        `Received event #${msg.getSequence()}, with data: `,
-        JSON.parse(data)
-      );
-    }
-
-    msg.ack();
-  });
+  new TicketCreatedListener(stan).listen();
 });
 
 process.on('SIGNIN', () => stan.close());
